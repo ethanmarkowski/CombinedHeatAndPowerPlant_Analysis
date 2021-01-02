@@ -1,0 +1,125 @@
+"Cycle B"
+"Design Variables"
+ 
+m_dot = 10.78
+p_4 =4588
+t_5 = 580
+ 
+"State 1"
+ 
+x_1 = 0
+p_1 = p_7 - 12
+ 
+t_1 = temperature(Steam, x=x_1, P=p_1)
+h_1 = enthalpy(Steam, x=x_1, P=p_1)
+s_1 = entropy(Steam, x=x_1, P=p_1)
+ 
+"State 2"
+ 
+p_2 = 9000
+s_2i = s_1
+h_2a = h_1 - (h_1 - h_2i)/0.76
+ 
+h_2i = enthalpy(Steam, P=p_2, s=s_2i)
+ 
+x_2a = quality(Steam, P=p_2, h=h_2a)
+t_2a = temperature(Steam, P=p_2, h=h_2a)
+s_2a = entropy(Steam, P=p_2, h=h_2a)
+ 
+"State 3"
+ 
+p_3 = 8860
+t_3 = 580
+ 
+x_3 = quality(Steam, P=p_3, T=t_3)
+h_3 = enthalpy(Steam, P=p_3, T=t_3)
+s_3 = entropy(Steam, P=p_3, T=t_3)
+ 
+"State 4"
+ 
+s_4i = s_3
+h_4a = h_3 - 0.89*(h_3 - h_4i)
+ 
+h_4i = enthalpy(Steam, P=p_4, s=s_4i)
+ 
+t_4a = temperature(Steam, P=p_4, h=h_4a)
+x_4a = quality(Steam, P=p_4, h=h_4a)
+s_4a = entropy(Steam, P=p_4, h=h_4a)
+ 
+"State 5"
+p_5 = p_4 - 140
+ 
+x_5 = quality(Steam, P=p_5, T=t_5)
+h_5 = enthalpy(Steam, P=p_5, T=t_5)
+s_5 = entropy(Steam, P=p_5, T=t_5)
+ 
+"State 6"
+t_6 = 80
+s_6i = s_5
+h_6a = h_5 - 0.89*(h_5 - h_6i)
+ 
+h_6i = enthalpy(Steam, T=t_6, s=s_6i)
+ 
+x_6a = quality(Steam, P=p_6a, h=h_6a)
+s_6a = entropy(Steam, P=p_6a, h=h_6a)
+p_6a = pressure(Steam, T=t_6, h=h_6a)
+ 
+"State 7"
+x_7 = 0
+p_7 = p_6a
+ 
+h_7 = enthalpy(Steam, x=x_7, P=p_7)
+t_7 = temperature(Steam, x=x_7, P=p_7)
+s_7 = entropy(Steam, x=x_7, P=p_7)
+ 
+"Turbine Work Out" 
+w_dot_turbine_out=m_dot*(0.95)*((h_5-h_6a)+(h_3-h_4a))
+ 
+"Pump Work In"
+w_dot_pump_in=m_dot*(h_2a-h_1)
+ 
+"Boiler Heat Input" 
+q_dot_boiler=m_dot*((h_3-h_2a)+(h_5-h_4a))
+ 
+"Condenser Heat Rejection" 
+q_dot_condenser=m_dot*(h_7-h_1)
+ 
+"Work Net"
+w_dot_net=w_dot_turbine_out-w_dot_pump_in
+ 
+"Purchased Power"
+w_dot_purchased = max(12*10^3-w_dot_net, 0)
+ 
+"Power Sold" 
+w_dot_sold = max(w_dot_net-12*10^3, 0)
+ 
+"Building Heat" 
+q_dot_building_heat=m_dot*(h_6a-h_7)
+q_dot_building_heat_purchased = max(15*10^3-q_dot_building_heat, 0)
+ 
+"Efficiency"
+efficiency_electrical = w_dot_net / q_dot_boiler
+efficiency_total = (w_dot_net + q_dot_building_heat/2)/ q_dot_boiler
+price_dollar_per_kWh = cost_total / (w_dot_net "kWh/h" *(24 "h/day")*(365.25 "days/year")*20)
+ 
+"Initial Cost"
+cost_turbine = 50000 + 270*(w_dot_turbine_out)
+cost_pump = 8000 + 2500*(w_dot_pump_in)
+cost_boiler = 180000*m_dot+100000*m_dot
+cost_reheat = 100000*m_dot
+cost_condenser = 65000*m_dot
+ cost_initial = cost_turbine + cost_pump + cost_boiler + cost_reheat + cost_condenser
+ 
+"Yearly Cost and Revenue"
+cost_maintenance = cost_initial*0.06
+cost_fuel = (q_dot_boiler + q_dot_building_heat_purchased/2) "kWh/h" *(24 "h/day")*(365.25 "days/year")*(3412.14 "btu/kwh")/(10^6 "btu/million btu")*(2.35 "dollars/million btu")
+cost_purchased_electricity = w_dot_purchased "kWh/h" *(24 "h/day")*(365.25 "days/year")*(0.095 "dollars/kWh")
+revenue_electricity_sold = w_dot_sold "kWh/h" *(24 "h/day")*(365.25 "days/year")*(0.024 "dollars/kWh")
+ 
+cost_yearly = cost_maintenance + cost_fuel + cost_purchased_electricity - revenue_electricity_sold
+ 
+"Total Cost Metrics"
+cost_total = cost_yearly * 20 + cost_initial
+ 
+"t_5 vs t_4a check"
+check = max(t_5 - t_4a, 0)
